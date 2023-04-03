@@ -66,4 +66,15 @@ class LoginSerializer(serializers.ModelSerializer):
             'type' : request_user.type,
             'tokens' : Token.objects.get_or_create(user=user)[0].key
         }
-    
+
+class UserDetailsSerializer(serializers.ModelSerializer):
+    email = serializers.ReadOnlyField(source='App_User.email')
+    class Meta:
+        model=App_User
+        fields=['email','first_name','last_name','dept_name','contact_number','profile_picture']
+
+class ProfessorDetailsSerializer(serializers.ModelSerializer):
+    user = serializers.ReadOnlyField(source='professor.email')
+    class Meta:
+        model = ProfessorMore
+        fields=['user','joining_year','designation','cv']
