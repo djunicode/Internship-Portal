@@ -25,8 +25,6 @@ urlpatterns = [
 
     #user accounts
     path('accounts/', include('accounts.urls')),
-
-    path('internship/', views.InternshipList.as_view()),
-    path('internshipDetails/<str:pk>/', views.InternshipDetail.as_view()),
+    path('users/' , include('users.urls')),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

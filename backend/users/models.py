@@ -1,7 +1,14 @@
 from django.db import models
+from accounts.models import Professor
 
-# Create your models here.
+class Research_Project(models.Model):
+    professor=models.ForeignKey(Professor,on_delete=models.CASCADE)
+    topic = models.CharField(max_length=10)
+    skills = models.CharField(max_length=30,blank=True)
+    eligibility = models.CharField(max_length=30,blank=True)
+
 class Internship(models.Model):
+    professor=models.ForeignKey(Professor,on_delete=models.CASCADE)
     internship_Title = models.CharField(max_length=30,blank=True)
     internship_Type = models.CharField(max_length=10,blank=True)
     start_date = models.DateField(blank=True)
