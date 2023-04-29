@@ -1,7 +1,7 @@
 from django.shortcuts import render
 from rest_framework.permissions import *
 # Create your views here.
-from django.http import HttpResponse
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -10,6 +10,10 @@ from .models import *
 from .serializers import *
 from rest_framework.generics import ListAPIView,RetrieveUpdateDestroyAPIView,ListCreateAPIView
 from django.core.exceptions import PermissionDenied
+from bs4 import BeautifulSoup
+import requests
+import ssl
+from urllib3 import poolmanager
 
 class InternshipList(APIView):
     def get(self, request):
@@ -72,3 +76,44 @@ class Research_ProjectRUD(RetrieveUpdateDestroyAPIView):
                 return Response({'status':403,'message': 'Some error has occured'})
         else:
             raise PermissionDenied        
+
+#web scrapping HelloIntern (login mandatory)
+class HelloIntern(APIView):
+    def get(self,request):
+        try:
+            url = "https://www.hellointern.com/search/"
+            class TLSAdapter(requests.adapters.HTTPAdapter):
+
+                def init_poolmanager(self, connections, maxsize, block=False):
+                    ctx = ssl.create_default_context()
+                    ctx.set_ciphers('DEFAULT@SECLEVEL=1')
+                    self.poolmanager = poolmanager.PoolManager(
+                            num_pools=connections,
+                            maxsize=maxsize,
+                            block=block,
+                            ssl_version=ssl.PROTOCOL_TLS,
+                            ssl_context=ctx)
+
+            session = requests.session()
+            session.mount('https://', TLSAdapter())
+            html_text=session.get(url).text
+            soup=BeautifulSoup(html_text,'lxml')
+            content=soup.find_all('tr',class_='content')
+            intern={}
+            i=1
+            for content in content:
+                components={}
+                title=content.find_all('a')[0].text.replace(' ','')
+                company_name=content.find_all('a')[1].text.replace(' ','')
+                day=content.find('span',class_='day').text.replace(' ','')
+                month_year=content.find('span',class_='month_year').text.replace(' ','')
+                salary=content.find('span',class_='salary_span').text.replace(' ','')
+                start_date=content.find_all('b')[0].text.replace(' ','')
+                location=content.find('span',class_='location_span').text.replace('\r\n ','').replace(' ','')
+                end_date=content.find_all('b')[1].text.replace(' ','')
+                components={'title':title,'company_name':company_name,'date_of_posting':day+month_year,'salary':salary,'internship_start_date':start_date,'internship_end_date':end_date,'location':location}
+                intern.update({i:components})
+                i=i+1
+            return JsonResponse(intern)
+        except:
+            return JsonResponse({'status':403,'message': 'Some error has occured'})
