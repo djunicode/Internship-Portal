@@ -14,22 +14,57 @@ from bs4 import BeautifulSoup
 import requests
 import ssl
 from urllib3 import poolmanager
+from rest_framework.decorators import api_view
 
-class InternshipList(APIView):
-    def get(self, request):
-        Contacts = Internship.objects.all()
-        serializer = InternshipSerializer(Contacts, many=True)
-        return Response(serializer.data)
-    def post(self, request):
-        pass
+@api_view(['GET'])
+def apiOverview(request):
+	api_urls = {
+		'List':'/internship-list/',
+		'Detail View':'/internship-detail/<str:pk>/',
+		'Create':'/internship-create/',
+		'Update':'/internship-update/<str:pk>/',
+		'Delete':'/internship-delete/<str:pk>/',
+		}
 
-class InternshipDetail(APIView):
-    def get(self, request, pk):
-        Contacts = Internship.objects.get(id=pk)
-        serializer = InternshipSerializer(Contacts, many=False)
-        return Response(serializer.data)
-    def post(self):
-        pass
+	return Response(api_urls)
+
+@api_view(['GET'])
+def internshipList(request):
+	Contacts = Internship.objects.all().order_by('-id')
+	serializer = InternshipSerializer(Contacts, many=True)
+	return Response(serializer.data)
+
+@api_view(['GET'])
+def internshipDetail(request, pk):
+	Contacts = Internship.objects.get(id=pk)
+	serializer = InternshipSerializer(Contacts, many=False)
+	return Response(serializer.data)
+
+@api_view(['POST'])
+def internshipCreate(request):
+    serializer = InternshipSerializer(data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+
+    return Response(serializer.data)
+
+@api_view(['POST'])
+def internshipUpdate(request, pk):
+    Contacts = Internship.objects.get(id=pk)
+    serializer = InternshipSerializer(instance=Contacts, data=request.data)
+
+    if serializer.is_valid():
+        serializer.save()
+
+    return Response(serializer.data)
+
+@api_view(['DELETE'])
+def internshipDelete(request, pk):
+    Contacts = Internship.objects.get(id=pk)
+    Contacts.delete()
+
+    return Response('Item succsesfully deleted!')
 
 #To display Research Project Lists to all students
 class Research_ProjectList(ListAPIView):

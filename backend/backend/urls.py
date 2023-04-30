@@ -22,9 +22,14 @@ from django.conf.urls.static import static
 urlpatterns = [
 
     path('admin/', admin.site.urls),
-
+	path('', views.apiOverview, name="api-overview"),
+	path('internship-list/', views.internshipList, name="internship-list"),
+	path('internship-detail/<str:pk>/', views.internshipDetail, name="internship-detail"),
+	path('internship-create/', views.internshipCreate, name="internship-create"),
+	path('internship-update/<str:pk>/', views.internshipUpdate, name="internship-update"),
+	path('internship-delete/<str:pk>/', views.internshipDelete, name="internship-delete"),
+    
     #user accounts
     path('accounts/', include('accounts.urls')),
     path('users/' , include('users.urls')),
-
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
