@@ -14,6 +14,10 @@ from bs4 import BeautifulSoup
 import requests
 import ssl
 from urllib3 import poolmanager
+import certifi
+from IPython.display import HTML
+import re
+from concurrent.futures import ThreadPoolExecutor
 
 class InternshipList(APIView):
     def get(self, request):
@@ -75,45 +79,140 @@ class Research_ProjectRUD(RetrieveUpdateDestroyAPIView):
             except:
                 return Response({'status':403,'message': 'Some error has occured'})
         else:
-            raise PermissionDenied        
+            raise PermissionDenied
 
-#web scrapping HelloIntern (login mandatory)
-class HelloIntern(APIView):
-    def get(self,request):
+
+
+#webscrapping linkedin (300 internships approx)
+class LinkedIn(APIView):
+    def get(self, request):
         try:
-            url = "https://www.hellointern.com/search/"
-            class TLSAdapter(requests.adapters.HTTPAdapter):
+            urls = [
+                   "https://in.linkedin.com/jobs/business-analytics-intern-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/cloud-intern-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/front-end-development-internship-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/web-development-intern-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/developer-internship-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/reactjs-interns-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/intern-react-js-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/react-js-developer-jobs-mumbai?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/react-js-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/ux-design-intern-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/ui-design-intern-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/python-django-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/node-js-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/node-js-jobs-mumbai?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/node-js-developer-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/flutter-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/data-science-intern-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/data-science-intern-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/data-science-internship-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/machine-learning-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/research-intern-jobs-mumbai?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/iot-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/blockchain-intern-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/mechanical-internship-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/natural-language-processing-intern-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/finance-internship-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/intern-hr-jobs-mumbai?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/hr-intern-jobs-mumbai?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/marketing-internship-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/marketing-intern-jobs-mumbai?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/marketing-intern-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/business-analyst-intern-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/technical-intern-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/technology-intern-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/internship-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/intern-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/intern-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/linkedin-internship-jobs-mumbai?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/research-internship-jobs-mumbai?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/summer-internship-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/summer-intern-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/internship-jobs-maharashtra?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/summer-internship-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/internship-intern-jobs-thane?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/parttime-intern-jobs?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/summer-intern-jobs-mumbai?position=1&pageNum=0",
+                   "https://in.linkedin.com/jobs/research-intern-jobs-mumbai-metropolitan-region?position=1&pageNum=0",
 
-                def init_poolmanager(self, connections, maxsize, block=False):
-                    ctx = ssl.create_default_context()
-                    ctx.set_ciphers('DEFAULT@SECLEVEL=1')
-                    self.poolmanager = poolmanager.PoolManager(
-                            num_pools=connections,
-                            maxsize=maxsize,
-                            block=block,
-                            ssl_version=ssl.PROTOCOL_TLS,
-                            ssl_context=ctx)
-
-            session = requests.session()
-            session.mount('https://', TLSAdapter())
-            html_text=session.get(url).text
-            soup=BeautifulSoup(html_text,'lxml')
-            content=soup.find_all('tr',class_='content')
-            intern={}
-            i=1
-            for content in content:
-                components={}
-                title=content.find_all('a')[0].text.replace(' ','')
-                company_name=content.find_all('a')[1].text.replace(' ','')
-                day=content.find('span',class_='day').text.replace(' ','')
-                month_year=content.find('span',class_='month_year').text.replace(' ','')
-                salary=content.find('span',class_='salary_span').text.replace(' ','')
-                start_date=content.find_all('b')[0].text.replace(' ','')
-                location=content.find('span',class_='location_span').text.replace('\r\n ','').replace(' ','')
-                end_date=content.find_all('b')[1].text.replace(' ','')
-                components={'title':title,'company_name':company_name,'date_of_posting':day+month_year,'salary':salary,'internship_start_date':start_date,'internship_end_date':end_date,'location':location}
-                intern.update({i:components})
-                i=i+1
-            return JsonResponse(intern)
+                    #add more linkedin static urls here
+            ]
+            
+            intern = {}
+            i = 1
+            
+            def scrape_url(url):
+                try:
+                    class TLSAdapter(requests.adapters.HTTPAdapter):
+                        def init_poolmanager(self, connections, maxsize, block=False):
+                            ctx = ssl.create_default_context(cafile=certifi.where())
+                            ctx.set_ciphers('DEFAULT@SECLEVEL=1')
+                            self.poolmanager = poolmanager.PoolManager(
+                                num_pools=connections,
+                                maxsize=maxsize,
+                                block=block,
+                                ssl_version=ssl.PROTOCOL_TLS,
+                                ssl_context=ctx)
+                    
+                    headers = {'Cache-Control': 'no-cache', 'Pragma': 'no-cache'}
+                    session = requests.session()
+                    session.mount('https://', TLSAdapter())
+                    html_text = session.get(url, headers=headers).text
+                    soup = BeautifulSoup(html_text, 'lxml')
+                    content = str(soup.find('ul', class_='jobs-search__results-list'))
+                    soup = BeautifulSoup(content, 'lxml')
+                    content = soup.find_all('li')
+                    
+                    results = []
+                    for content in content:
+                        try:
+                            link = content.find('a', {'class': 'base-card__full-link absolute top-0 right-0 bottom-0 left-0 p-0 z-[2]'}).get('href')
+                        except:
+                            link = 'information unavailable'
+                        
+                        try:
+                            title = content.find('h3', class_='base-search-card__title').text.replace('\n      ', '')
+                            cleanedtitle = re.sub(r'\s+', ' ', title)
+                        except:
+                            cleanedtitle = 'information unavailable'
+                        
+                        try:
+                            company = content.find('a', class_='hidden-nested-link').text.replace('\n         ', '')
+                            cleanedcompany = re.sub(r'\s+', ' ', company)
+                        except:
+                            cleanedcompany = 'information unavailable'
+                        
+                        try:
+                            date_of_posting = content.find('time', {'class': 'job-search-card__listdate'}).get('datetime')
+                        except:
+                            try:
+                                date_of_posting = content.find('time', {'class': 'job-search-card__listdate--new'}).get('datetime')
+                            except:
+                                date_of_posting = 'information unavailable'
+                        
+                        try:
+                            location = content.find('span', class_="job-search-card__location").text.replace('\n         ', '')
+                        except:
+                            location = 'information unavailable'
+                        
+                        components = {'title': cleanedtitle, 'company_name': cleanedcompany, 'location': location, 'date_of_posting': date_of_posting, 'link': link}
+                        results.append(components)
+                    
+                    return results
+                except:
+                    return []
+            
+            with ThreadPoolExecutor(max_workers=3) as executor:
+                futures = [executor.submit(scrape_url, url) for url in urls]
+                
+                for future in futures:
+                    results = future.result()
+                    for result in results:
+                        intern[i] = result
+                        i += 1
+            
+            return Response(intern)
+        
         except:
-            return JsonResponse({'status':403,'message': 'Some error has occured'})
+            return JsonResponse({'status': 403, 'message': 'Some error has occurred'})
