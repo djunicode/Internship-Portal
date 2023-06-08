@@ -236,7 +236,7 @@ class LinkedIn(APIView):
                 except:
                     return []
             
-            with ThreadPoolExecutor(max_workers=3) as executor:
+            with ThreadPoolExecutor(max_workers=4) as executor:
                 futures = [executor.submit(scrape_url, url) for url in urls]
                 
                 for future in futures:
