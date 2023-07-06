@@ -79,7 +79,7 @@ class Research_ProjectLC(ListCreateAPIView):
     serializer_class = Research_ProjectSerializer
     permission_classes = (IsAuthenticated,)
     def get_queryset(self):
-        if self.request.user is Professor:
+        if self.request.user.type == 'PROFESSOR':
             try:
                 user = self.request.user
                 return Research_Project.objects.filter(professor=user)
@@ -89,7 +89,8 @@ class Research_ProjectLC(ListCreateAPIView):
             raise PermissionDenied
         
     def perform_create(self,serializer):
-        if self.request.user is Professor:
+        print(self.request.user is Professor)
+        if self.request.user.type == 'PROFESSOR':
             try:
                 user = self.request.user
                 print(user)
@@ -105,7 +106,7 @@ class Research_ProjectRUD(RetrieveUpdateDestroyAPIView):
     serializer_class = Research_ProjectSerializer
     permission_classes = (IsAuthenticated,)
     def get_queryset(self):
-        if self.request.user is Professor:
+        if self.request.user.type == 'PROFESSOR':
             try:
                 user = self.request.user
                 return Research_Project.objects.filter(professor=user)
